@@ -2,65 +2,95 @@ import { useEffect, useRef } from "react";
 
 export interface ImagePreviewProps {
   imageUrl: string | null;
+  detectedWords: DetectedWord[] | null;
+  originalImageSize: OriginalImageSize | null;
 }
 
-const ImagePreview = ({ imageUrl }: ImagePreviewProps) => {
+interface BoxPoint {
+  x: number;
+  y: number;
+}
+
+interface BoundingPoly {
+  vertices: BoxPoint[];
+}
+
+export interface DetectedWord {
+  boundingPoly: BoundingPoly;
+  description: string;
+}
+
+export interface OriginalImageSize {
+  width: number;
+  height: number;
+}
+
+const ImagePreview = ({
+  imageUrl,
+  detectedWords,
+  originalImageSize,
+}: ImagePreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  const drawBoxes = (
-    boxes: DOMRectList | undefined,
-    imageWidth: number,
-    imageHeight: number
-  ) => {
+  const drawBoxes = (imageWidth: number, imageHeight: number) => {
     const canv = canvasRef.current;
     if (!canv) {
       return;
     }
-    console.log("canvas: ", `${canv.width} x ${canv.height}`);
+
+    console.log("drawing!!");
 
     canv.width = imageWidth;
     canv.height = imageHeight;
 
     const ctx = canv.getContext("2d");
     const { width, height } = canv;
-    const scaleX = width / imageWidth;
-    const scaleY = height / imageHeight;
+    const scaleX = imageWidth / (originalImageSize?.width || 1);
+    const scaleY = imageHeight / (originalImageSize?.height || 1);
 
     // TODO: Calculate and draw box
-    if (boxes) {
-      ctx?.clearRect(0, 0, width, height);
-      for (let i = 0; i < boxes.length; i++) {
-        const box = boxes.item(i);
-        ctx?.rect(0, 0, box!!.width, box!!.height);
-        ctx!!.strokeStyle = "red";
-        ctx!!.lineWidth = 12;
-        ctx?.stroke();
+    ctx?.clearRect(0, 0, width, height);
+
+    detectedWords?.forEach((word) => {
+      const verts = word.boundingPoly.vertices;
+      ctx!!.strokeStyle = "red";
+      ctx!!.lineWidth = 2;
+      console.log(
+        `verts: x: ${verts[0].x * scaleX}, y: ${verts[0].y * scaleY}`
+      );
+      ctx!!.moveTo(verts[0].x * scaleX, verts[0].y * scaleY);
+      for (let i = 1; i < verts.length; i++) {
+        ctx!!.lineTo(verts[i].x * scaleX, verts[i].y * scaleY);
       }
-    }
+      ctx!!.lineTo(verts[0].x * scaleX, verts[0].y * scaleY);
+      ctx?.stroke();
+      console.log("Stroking ", verts.length);
+    });
   };
 
-  //   useEffect(() => {
-  if (imageUrl) {
-    console.log(
-      "imageRef: ",
-      `${imgRef.current?.clientWidth} x ${imgRef.current?.clientHeight}`
-    );
+  useEffect(() => {
+    if (imageUrl) {
+      console.log(
+        "imageRef: ",
+        `${imgRef.current?.clientWidth} x ${imgRef.current?.clientHeight}`
+      );
 
-    const previewImage = imgRef.current;
+      const previewImage = imgRef.current;
 
-    drawBoxes(
-      previewImage?.getClientRects(),
-      previewImage?.clientWidth || 0,
-      previewImage?.clientHeight || 0
-    );
-  }
-  //   }, [imageUrl]);
+      if (detectedWords) {
+        drawBoxes(
+          // previewImage?.getClientRects(),
+          previewImage?.clientWidth || 0,
+          previewImage?.clientHeight || 0
+        );
+      }
+    }
+  }, [detectedWords]);
 
   if (imageUrl) {
     return (
       <div className="relavive">
-        {/* <h2>ImagePreview</h2> */}
         <img src={imageUrl} ref={imgRef} className="absolute size-fit" />
         <canvas ref={canvasRef} className="absolute " />
       </div>

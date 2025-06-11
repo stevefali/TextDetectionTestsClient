@@ -4,17 +4,27 @@ import axios from "axios";
 import { getPreviouslyCachedImageOrNull } from "next/dist/server/image-optimizer";
 import Image from "next/image";
 import { useRef, useState } from "react";
-import ImagePreview from "./components/ImagePreview";
+import ImagePreview, {
+  DetectedWord,
+  OriginalImageSize,
+} from "./components/ImagePreview";
 
 export default function Home() {
   const formRef = useRef<HTMLFormElement>(null);
 
+  const DETECTION_URL = "http://10.0.0.226:8080/detection";
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [detectedWords, setDetectedWords] = useState<DetectedWord[] | null>(
+    null
+  );
+  const [originalImageSize, setOriginalImageSize] =
+    useState<OriginalImageSize | null>(null);
 
-  const uploadImage = async (formData: FormData) => {
-    const response = axios.post(
-      "http://10.0.0.226:8080/detection/upload",
+  const sendImage = async (formData: FormData, endpoint: string) => {
+    const response = await axios.post(
+      `${DETECTION_URL}/${endpoint}`,
       formData,
       {
         headers: {
@@ -23,7 +33,20 @@ export default function Home() {
       }
     );
 
-    console.log("response: ", (await response).data.message);
+    console.log("response: ", response.data);
+    if (endpoint === "detect") {
+      setOriginalImageSize(response.data.originalSize);
+      const words = response.data.results;
+      // For now, just take some
+      const trimmed = words.splice(1, 10);
+
+      const detections: DetectedWord[] = trimmed.map((word: any) => {
+        const { boundingPoly, description } = word;
+        return { boundingPoly: boundingPoly, description: description };
+      });
+
+      setDetectedWords(detections);
+    }
   };
 
   const onImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,7 +60,10 @@ export default function Home() {
     }
   };
 
-  const onSubmitImage = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmitImage = (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    action: string
+  ) => {
     event.preventDefault();
 
     if (!selectedFile) {
@@ -50,8 +76,7 @@ export default function Home() {
 
     console.log("imageUrl: ", imageUrl);
     console.log(formData);
-
-    uploadImage(formData);
+    sendImage(formData, action);
   };
 
   return (
@@ -59,7 +84,7 @@ export default function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <form
           ref={formRef}
-          onSubmit={onSubmitImage}
+          // onSubmit={onSubmitImage}
           // encType="multipart/form-data"
         >
           <label htmlFor="image-input">Upload an image file</label>
@@ -71,9 +96,18 @@ export default function Home() {
             onChange={onImageChange}
             capture="environment"
           />
-          <button type="submit">Upload</button>
+          <div className="flex flex-row gap-6">
+            <button onClick={(e) => onSubmitImage(e, "upload")}>Upload</button>
+            <button onClick={(e) => onSubmitImage(e, "detect")}>
+              Detect Text
+            </button>
+          </div>
         </form>
-        <ImagePreview imageUrl={imageUrl} />
+        <ImagePreview
+          imageUrl={imageUrl}
+          detectedWords={detectedWords}
+          originalImageSize={originalImageSize}
+        />
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center"></footer>
     </div>
