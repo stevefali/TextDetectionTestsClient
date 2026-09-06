@@ -1,0 +1,48 @@
+[
+  {
+    "description": "Warnings\nDo not use in children under 12 years unless directed by a doctor.\nAsk a doctor or pharmacist before use if you are pregnant or breastfeeding.\nStop use and ask a doctor if symptoms last up to 2 weeks\nto 2 weeks symptoms recur\nKeep out of reach of children. In case of overdose, call a Poison Control Centre or doctor immediately, even\nif you have no signs or symptoms.",
+    "boundingPoly": {
+      "vertices": [
+        {
+          "x": 159,
+          "y": 1675
+        },
+        {
+          "x": 2878,
+          "y": 1675
+        },
+        {
+          "x": 2878,
+          "y": 2676
+        },
+        {
+          "x": 159,
+          "y": 2676
+        }
+      ]
+    }
+  },
+  {
+    "description": "Directions ●Adults and children 12 years and older: take 1 softgel as needed after meals and at\nbedtime ●do not take more than 3 softgels in 24 hours",
+    "boundingPoly": {
+      "vertices": [
+        {
+          "x": 231,
+          "y": 2531
+        },
+        {
+          "x": 2689,
+          "y": 2531
+        },
+        {
+          "x": 2689,
+          "y": 2677
+        },
+        {
+          "x": 231,
+          "y": 2677
+        }
+      ]
+    }
+  }
+]

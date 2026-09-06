@@ -37,6 +37,9 @@ export default function Home() {
     if (endpoint === "detect") {
       setOriginalImageSize(response.data.originalSize);
       const words = response.data.results;
+
+      console.log(words[0].description);
+
       // For now, just take some
       const trimmed = words.splice(1, 10);
 
